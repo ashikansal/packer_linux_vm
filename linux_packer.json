@@ -1,0 +1,63 @@
+{
+  "builders": [{
+    "type": "azure-arm",
+
+    "client_id": "deca58c5-6d3e-47cd-910c-1b62d057a71f",
+    "client_secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "tenant_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "subscription_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+
+    "managed_image_resource_group_name": "packerTestRG",
+    "managed_image_name": "PackerLinuxJavaImage",
+
+    "os_type": "Linux",
+    "image_publisher": "OpenLogic",
+    "image_offer": "CentOS",
+    "image_sku": "7.5",
+
+    "azure_tags": {
+      "dept": "Engineering",
+      "task": "Image deployment"
+    },
+
+    "location": "East US",
+    "vm_size": "Standard_DS2_v2"
+  }],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "files/sample-app.sh",
+      "destination": "/tmp/sample-app.sh"
+    },
+    {
+      "type": "file",
+      "source": "files/TodoDemo-0.0.1-SNAPSHOT.war",
+      "destination": "/tmp/TodoDemo-0.0.1-SNAPSHOT.war"
+    },
+    {
+      "type": "file",
+      "source": "files/sample-app.service",
+      "destination": "/tmp/sample-app.service"
+    },
+    {
+    "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+    "inline": [
+      "yum update -y ",
+      "yum install -y java-1.8.0-openjdk-devel",
+      "yum install -y java-1.8.0-openjdk",
+      "mkdir /src",
+      "cp /tmp/sample-app.sh /usr/local/bin/sample-app.sh",
+      "chmod +x /usr/local/bin/sample-app.sh",
+      "cp /tmp/TodoDemo-0.0.1-SNAPSHOT.war /src/TodoDemo-0.0.1-SNAPSHOT.war",
+      "chmod +x /src/TodoDemo-0.0.1-SNAPSHOT.war",
+      "cp /tmp/sample-app.service /etc/systemd/system/sample-app.service",
+      "systemctl daemon-reload",
+      "systemctl enable sample-app",
+      "systemctl start sample-app",
+      "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ],
+    "inline_shebang": "/bin/sh -x",
+    "type": "shell"
+  }
+  ]
+}
